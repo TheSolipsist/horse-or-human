@@ -9,5 +9,5 @@ data = load(Path(__file__).parent.absolute() / data_dir / data_filename)
 first_image = data['train'][782][0:-1]
 y = data['train'][782][-1]
 
-ToPILImage()(first_image.reshape(3,50,50)).show()
+ToPILImage()(first_image.reshape(3,150,150)).show()
 print(y)

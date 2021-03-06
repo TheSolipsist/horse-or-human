@@ -1,0 +1,27 @@
+--------------------
+NUM_FEATURES = 67500
+NUM_NEURONS_LAYER = [1000, 1000, 500, 1]
+LEARNING_RATE = 0.0002
+NUM_EPOCHS = 1
+
+Training set accuracy: 0.48685491723466406
+Validation set accuracy: 0.5
+--------------------
+--------------------
+NUM_FEATURES = 67500 (3 x 150 x 150)
+NUM_NEURONS_LAYER = [4000, 1000, 500, 1]
+LEARNING_RATE = 0.0002
+NUM_EPOCHS = 1
+
+Training set accuracy: 0.5131450827653359
+Validation set accuracy: 0.5
+--------------------
+--------------------
+NUM_FEATURES = 67500 (3x150x150)
+NUM_NEURONS_LAYER = [4000, 1000, 500, 1]
+LEARNING_RATE = 0.0002
+NUM_EPOCHS = 1
+
+Training set accuracy: 0.48685491723466406
+Validation set accuracy: 0.5
+--------------------
