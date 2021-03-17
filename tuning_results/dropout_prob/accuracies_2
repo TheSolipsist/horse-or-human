@@ -1,0 +1,76 @@
+--------------------
+NUM_FEATURES = 270000 (3x300x300)
+NUM_NEURONS_LAYER = [270000, 128, 128, 128, 128, 128]
+LEARNING_RATE = 0.0008
+NUM_EPOCHS = 5000
+INIT_MEAN, INIT_STD = 0 1
+WEIGHT_DECAY = 0
+DROPOUT_PROBS = [0.002, 0.62, 0.62, 0.62, 0.62]
+
+Training set loss:
+0.19536375999450684
+Training set accuracy:
+1.0
+
+Validation set loss:
+1.1832928657531738
+Validation set accuracy:
+0.6328125
+--------------------
+--------------------
+NUM_FEATURES = 270000 (3x300x300)
+NUM_NEURONS_LAYER = [270000, 64, 64, 64, 64, 64]
+LEARNING_RATE = 0.0008
+NUM_EPOCHS = 5000
+INIT_MEAN, INIT_STD = 0 1
+WEIGHT_DECAY = 0.5
+DROPOUT_PROBS = [0.002, 0.22, 0.22, 0.22, 0.22]
+
+Training set loss:
+0.6854023337364197
+Training set accuracy:
+0.8227848410606384
+
+Validation set loss:
+0.6829626560211182
+Validation set accuracy:
+0.80859375
+--------------------
+--------------------
+NUM_FEATURES = 270000 (3x300x300)
+NUM_NEURONS_LAYER = [270000, 64, 64, 64, 64, 64]
+LEARNING_RATE = 0.0015
+NUM_EPOCHS = 5000
+INIT_MEAN, INIT_STD = 0 1
+WEIGHT_DECAY = 0.5
+DROPOUT_PROBS = [0.002, 0.22, 0.22, 0.22, 0.22]
+
+Training set loss:
+0.6929589509963989
+Training set accuracy:
+0.5131450891494751
+
+Validation set loss:
+0.6931838989257812
+Validation set accuracy:
+0.5
+--------------------
+--------------------
+NUM_FEATURES = 270000 (3x300x300)
+NUM_NEURONS_LAYER = [270000, 64, 64, 64, 64, 64]
+LEARNING_RATE = 0.0002
+NUM_EPOCHS = 5000
+INIT_MEAN, INIT_STD = 0 1
+WEIGHT_DECAY = 0.5
+DROPOUT_PROBS = [0.002, 0.22, 0.22, 0.22, 0.22]
+
+Training set loss:
+0.5183737277984619
+Training set accuracy:
+0.887049674987793
+
+Validation set loss:
+0.3968747556209564
+Validation set accuracy:
+0.90625
+--------------------

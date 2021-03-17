@@ -14,4 +14,5 @@ def plot_losses(epoch_loss, fig_path):
     plt.title('Loss at each epoch')
     plt.legend()
     plt.savefig(fig_path)
-    plt.show()
+    #plt.show()
+    plt.close()

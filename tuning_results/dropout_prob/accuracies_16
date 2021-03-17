@@ -1,0 +1,19 @@
+--------------------
+NUM_FEATURES = 270000 (3x300x300)
+NUM_NEURONS_LAYER = [270000, 64, 64, 64, 64, 64]
+LEARNING_RATE = 0.0002
+NUM_EPOCHS = 5000
+INIT_MEAN, INIT_STD = 0 1
+WEIGHT_DECAY = 0.5
+DROPOUT_PROBS = [0.016, 0.36, 0.36, 0.36, 0.36]
+
+Training set loss:
+0.5777698755264282
+Training set accuracy:
+0.8821811079978943
+
+Validation set loss:
+0.4812195897102356
+Validation set accuracy:
+0.8984375
+--------------------
