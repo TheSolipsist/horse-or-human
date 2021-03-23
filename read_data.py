@@ -3,7 +3,7 @@ from torchvision import transforms
 from pathlib import Path
 from PIL import Image
 
-# new_size = (150, 150)
+new_size = (75, 75)
 def read_data(data_dir, data_filename):
     labels = ['horses', 'humans']
     label_value = {'horses': 0., 'humans': 1.}
@@ -13,7 +13,7 @@ def read_data(data_dir, data_filename):
         for label in labels:
             path_to_directory = Path(__file__).parent.absolute() / data_dir / data_tag / label
             for image_path in path_to_directory.glob('*'):    
-                img = Image.open(image_path).convert("RGB")
+                img = Image.open(image_path).convert("RGB").resize(new_size)
                 img_tensor = transforms.ToTensor()(img).flatten()
                 img_tensor = torch.cat((img_tensor, torch.tensor([label_value[label]])))
                 data[data_tag].append(img_tensor)

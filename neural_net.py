@@ -19,26 +19,26 @@ def init_weights(m):
         nn.init.xavier_normal_(m.weight)
         nn.init.constant_(m.bias, 0)
 
-TESTING_HYPERPARAM = 'dropout_prob'
-# Test
-for test_run in range(1, 31):
+TESTING_HYPERPARAM = 'learning_rate'
+TEST_RUNS = 1
+for test_run in range(1, TEST_RUNS + 1):
     # Hyperparameters #
     #-----------------#
     NUM_FEATURES = data['train'][0].size()[0] - 1
-    NUM_HIDDEN = 5
-    NUM_NEURONS_LAYER = [NUM_FEATURES] + [64] * NUM_HIDDEN
-    DROPOUT_PROBS = [0 + 0.001 * test_run] + [0.2 + 0.01 * test_run] * (NUM_HIDDEN - 1)
-    LEARNING_RATE = 0.0001
-    NUM_EPOCHS = 5000
+    NUM_HIDDEN = 40
+    NUM_NEURONS_LAYER = [NUM_FEATURES] + [1024] * NUM_HIDDEN
+    #DROPOUT_PROBS = [0 + 0.001 * test_run] + [0.2 + 0.01 * test_run] * (NUM_HIDDEN - 1)
+    LEARNING_RATE = 0.02
+    NUM_EPOCHS = 1000
     INIT_MEAN, INIT_STD = 0, 1
-    WEIGHT_DECAY = 0.5
+    WEIGHT_DECAY = 0.002
     #-----------------#
 
     sequential_list = []
     for i in range(len(NUM_NEURONS_LAYER) - 1):
         sequential_list.append(nn.Linear(NUM_NEURONS_LAYER[i], NUM_NEURONS_LAYER[i + 1]))
         sequential_list.append(nn.ReLU())
-        sequential_list.append(nn.Dropout(DROPOUT_PROBS[i]))
+        #sequential_list.append(nn.Dropout(DROPOUT_PROBS[i]))
     sequential_list.append(nn.Linear(NUM_NEURONS_LAYER[-1], 1)) 
     sequential_list.append(nn.Sigmoid())
     net = nn.Sequential(*sequential_list)
@@ -94,7 +94,7 @@ for test_run in range(1, 31):
                     '\nNUM_EPOCHS = ' + str(NUM_EPOCHS) +
                     '\nINIT_MEAN, INIT_STD = ' + str(INIT_MEAN) + ' ' + str(INIT_STD) +
                     '\nWEIGHT_DECAY = ' + str(WEIGHT_DECAY) +
-                    '\nDROPOUT_PROBS = ' + str(DROPOUT_PROBS) +
+                    #'\nDROPOUT_PROBS = ' + str(DROPOUT_PROBS) +
                     '\n' + 
                     '\nTraining set loss:\n' + str(training_loss) +
                     '\nTraining set accuracy:\n' + str(training_accuracy) +
@@ -108,7 +108,7 @@ for test_run in range(1, 31):
 
     #save(net, "mymodel.pt")
 
-    fig_path = "tuning/graphs/BCELoss" + str(test_run) + ".png"
+    fig_path = "tuning_results/graphs/BCELoss" + str(test_run) + ".png"
     plot_losses(epoch_loss, fig_path)
 
     del X_train, Y_train, X_val, Y_val, net, Y_hat, Y_hat_val, epoch_loss
