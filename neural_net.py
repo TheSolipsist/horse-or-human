@@ -1,21 +1,31 @@
-from torch import nn, load, optim, randperm, device, save, no_grad
+from torch import nn, load, optim, randperm, device, save, no_grad, utils, float32
+from torch.utils.data import DataLoader
+from torchvision.transforms import transforms
+from torchvision.datasets import ImageFolder
+
 from pathlib import Path
 from math import sqrt
 from time import time
 
-from torch.nn.modules.activation import ReLU
-from torch.nn.modules.dropout import Dropout
 from plot_losses import plot_losses
 
-data_dir = 'data'
-data_filename = 'data.pt'
-data = load(Path(__file__).parent.absolute() / data_dir / data_filename)
+num_workers = 0
+batch_size = 256
 
-num_train_examples = data['train'].size()[0]
-num_val_examples = data['validation'].size()[0]
+gpu = device('cuda:0')
+data_dir = 'data'
+transform = transforms.Compose([
+    transforms.Resize((128, 128)),
+    transforms.ToTensor()
+])
+train_dataset = ImageFolder(root=data_dir+'/train', transform=transform)
+test_dataset = ImageFolder(root=data_dir+'/validation', transform=transform)
+
+train_iter = DataLoader(dataset=train_dataset, batch_size=1027, shuffle=True, num_workers=num_workers)
+test_iter = DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, num_workers=num_workers)
 
 def init_weights(m):
-    if isinstance(m, nn.Linear):
+    if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
         nn.init.xavier_normal_(m.weight)
         nn.init.constant_(m.bias, 0)
 
@@ -24,75 +34,100 @@ TEST_RUNS = 1
 for test_run in range(1, TEST_RUNS + 1):
     # Hyperparameters #
     #-----------------#
-    NUM_FEATURES = data['train'][0].size()[0] - 1
-    NUM_HIDDEN = 40
-    NUM_NEURONS_LAYER = [NUM_FEATURES] + [1024] * NUM_HIDDEN
+    # NUM_FEATURES = data['train'][0].size()[0] - 1
+    # NUM_HIDDEN = 40
+    # NUM_NEURONS_LAYER = [NUM_FEATURES] + [1024] * NUM_HIDDEN
     #DROPOUT_PROBS = [0 + 0.001 * test_run] + [0.2 + 0.01 * test_run] * (NUM_HIDDEN - 1)
-    LEARNING_RATE = 0.02
-    NUM_EPOCHS = 1000
-    INIT_MEAN, INIT_STD = 0, 1
-    WEIGHT_DECAY = 0.002
+    LEARNING_RATE = 0.01
+    NUM_EPOCHS = 200
+    WEIGHT_DECAY = 0
     #-----------------#
 
-    sequential_list = []
-    for i in range(len(NUM_NEURONS_LAYER) - 1):
-        sequential_list.append(nn.Linear(NUM_NEURONS_LAYER[i], NUM_NEURONS_LAYER[i + 1]))
-        sequential_list.append(nn.ReLU())
-        #sequential_list.append(nn.Dropout(DROPOUT_PROBS[i]))
-    sequential_list.append(nn.Linear(NUM_NEURONS_LAYER[-1], 1)) 
-    sequential_list.append(nn.Sigmoid())
+    sequential_list = [
+        nn.Conv2d(3, 5, kernel_size=7, padding=3),
+        nn.ReLU(),
+        nn.MaxPool2d(kernel_size=8, stride=8),
+
+        nn.Flatten(),
+        nn.Linear(5 * 16 * 16, 100),
+        nn.ReLU(),
+        nn.Linear(100, 1),
+        nn.Sigmoid()
+    ]
+    # for i in range(len(NUM_NEURONS_LAYER) - 1):
+    #     sequential_list.append(nn.Linear(NUM_NEURONS_LAYER[i], NUM_NEURONS_LAYER[i + 1]))
+    #     sequential_list.append(nn.ReLU())
+    #     #sequential_list.append(nn.Dropout(DROPOUT_PROBS[i]))
+    # sequential_list.append(nn.Linear(NUM_NEURONS_LAYER[-1], 1)) 
+    # sequential_list.append(nn.Sigmoid())
     net = nn.Sequential(*sequential_list)
-    net.to(device('cuda:0'))
+    net.to(gpu)
     net.apply(init_weights)
 
     criterion = nn.BCELoss(reduction='mean')
-    trainer = optim.SGD(params=net.parameters(), lr=LEARNING_RATE, weight_decay = WEIGHT_DECAY)
-
-    X_train = data['train'][:, 0:-1].to(device('cuda:0'))
-    Y_train = data['train'][:, -1].reshape(num_train_examples).to(device('cuda:0'))
-
-    X_val = data['validation'][:, 0:-1].to(device('cuda:0'))
-    Y_val = data['validation'][:, -1].reshape(num_val_examples).to(device('cuda:0'))
-
+    optimizer = optim.SGD(params=net.parameters(), lr=LEARNING_RATE, weight_decay = WEIGHT_DECAY)
+    
     epoch_loss = []
-    for epoch in range(NUM_EPOCHS):
-        print('\rEpoch: ' + str(epoch + 1) + ' / ' + str(NUM_EPOCHS), end = '')
-        net.eval()
-        with no_grad():
-            Y_hat_val = net(X_val)
-            validation_loss = criterion(Y_hat_val.reshape(num_val_examples), Y_val)
-        net.train()
-        Y_hat = net(X_train)
-        training_loss = criterion(Y_hat.reshape(num_train_examples), Y_train)
-        epoch_loss.append([training_loss, validation_loss])
-        trainer.zero_grad()
-        training_loss.backward()
-        trainer.step()
+    net.train()
+
+    
+    for X, Y in train_iter:
+        X, Y = X.to(gpu), Y.to(gpu)
+        for epoch in range(NUM_EPOCHS):
+            print('\rEpoch: ' + str(epoch + 1) + ' / ' + str(NUM_EPOCHS), end = '')
+
+            optimizer.zero_grad()
+            Y_hat = net(X)
+            loss = criterion(Y_hat.squeeze().to(float32), Y.squeeze().to(float32))
+            loss.backward()
+            optimizer.step()
+            epoch_loss.append(loss)
     print()
 
     for epoch in range(NUM_EPOCHS):
-        for i in range(2):
-            epoch_loss[epoch][i] = epoch_loss[epoch][i].item()
+        epoch_loss[epoch] = epoch_loss[epoch].item()
 
     net.eval()
-    training_loss = epoch_loss[-1][0]
-    training_accuracy = (((net(X_train) > 0.5).reshape(num_train_examples) == Y_train).sum() / num_train_examples).item()
-    print('Training set loss: ' + str(training_loss))
-    print('Training set accuracy: ' + str(training_accuracy))
 
-    validation_loss = epoch_loss[-1][1]
-    validation_accuracy = (((net(X_val) > 0.5).reshape(num_val_examples) == Y_val).sum() / num_val_examples).item()
-    print('Validation set loss: ' + str(validation_loss))
-    print('Validation set accuracy: ' + str(validation_accuracy))
+    with no_grad():
+        correct_predictions = 0
+        total_predictions = 0
+        losses = []
+        for X, Y in train_iter:
+            X, Y = X.to(gpu), Y.to(gpu)
+            Y_hat = net(X)
+            losses.append(criterion(Y_hat.squeeze().to(float32), Y.squeeze().to(float32)))
+            predictions = (Y_hat.squeeze() > 0.5) == Y.squeeze()
+            correct_predictions += predictions.sum()
+            total_predictions += predictions.numel()
+    
+    training_loss = sum(losses) / len(losses)
+    training_accuracy = correct_predictions / total_predictions
+    print('Training set loss: ' + str(training_loss.item()))
+    print('Training set accuracy: ' + str(training_accuracy.item()))
+
+    with no_grad():
+        correct_predictions = 0
+        total_predictions = 0
+        losses = []
+        for X, Y in test_iter:
+            X, Y = X.to(gpu), Y.to(gpu)
+            Y_hat = net(X)
+            losses.append(criterion(Y_hat.squeeze().to(float32), Y.squeeze().to(float32)))
+            predictions = (Y_hat.squeeze() > 0.5) == Y.squeeze()
+            correct_predictions += predictions.sum()
+            total_predictions += predictions.numel()
+
+    validation_loss = sum(losses) / len(losses)
+    validation_accuracy = correct_predictions / total_predictions
+    print('Validation set loss: ' + str(validation_loss.item()))
+    print('Validation set accuracy: ' + str(validation_accuracy.item()))
 
     with open('tuning_results/' + TESTING_HYPERPARAM + '/accuracies_' + str(test_run), 'a') as accuracies:
         accuracies.write(
                     '-' * 20 +
-                    '\nNUM_FEATURES = ' + str(NUM_FEATURES) + str(' (3x') + str((int(sqrt(NUM_FEATURES / 3)))) + 'x' +  str((int(sqrt(NUM_FEATURES / 3))))  + ')' +
-                    '\nNUM_NEURONS_LAYER = ' + str(NUM_NEURONS_LAYER) +
                     '\nLEARNING_RATE = ' + str(LEARNING_RATE) +
                     '\nNUM_EPOCHS = ' + str(NUM_EPOCHS) +
-                    '\nINIT_MEAN, INIT_STD = ' + str(INIT_MEAN) + ' ' + str(INIT_STD) +
                     '\nWEIGHT_DECAY = ' + str(WEIGHT_DECAY) +
                     #'\nDROPOUT_PROBS = ' + str(DROPOUT_PROBS) +
                     '\n' + 
@@ -107,8 +142,5 @@ for test_run in range(1, TEST_RUNS + 1):
         )
 
     #save(net, "mymodel.pt")
-
-    fig_path = "tuning_results/graphs/BCELoss" + str(test_run) + ".png"
-    plot_losses(epoch_loss, fig_path)
-
-    del X_train, Y_train, X_val, Y_val, net, Y_hat, Y_hat_val, epoch_loss
+    # fig_path = "tuning_results/graphs/BCELoss" + str(test_run) + ".png"
+    # plot_losses(epoch_loss, fig_path)
