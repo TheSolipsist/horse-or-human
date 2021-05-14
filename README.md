@@ -1,3 +1,3 @@
 # horse-or-human
 
-Building a neural network trained using the horse or human Kaggle dataset.
+Training a neural network on the horse or human Kaggle dataset.
